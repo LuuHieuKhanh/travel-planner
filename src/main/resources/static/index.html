@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Travel Planner</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<div class="container">
+    <div class="hero">
+        <h1><i class="bi bi-globe2"></i> AI Travel Planner</h1>
+        <p class="lead text-light">Lên kế hoạch du lịch thông minh, nhanh chóng và tối ưu chi phí</p>
+    </div>
+
+    <div class="form-card mx-auto col-lg-10 col-xl-8">
+        <form id="travelForm">
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label for="startingLocation" class="form-label"><i class="bi bi-geo-alt-fill"></i> Điểm xuất
+                        phát</label>
+                    <input type="text" class="form-control" id="startingLocation" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="destination" class="form-label"><i class="bi bi-flag-fill"></i> Điểm đến</label>
+                    <input type="text" class="form-control" id="destination" required>
+                </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label for="numberOfPeople" class="form-label"><i class="bi bi-people-fill"></i> Số người</label>
+                    <input type="number" class="form-control" id="numberOfPeople" min="1" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="minBudget" class="form-label"><i class="bi bi-cash-stack"></i> Ngân sách tối thiểu (VNĐ)</label>
+                    <input type="number" class="form-control" id="minBudget" min="0" required>
+                </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label for="maxBudget" class="form-label"><i class="bi bi-wallet2"></i> Ngân sách tối đa
+                        (VNĐ)</label>
+                    <input type="number" class="form-control" id="maxBudget" min="0" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="startDate" class="form-label"><i class="bi bi-calendar-event"></i> Ngày đi</label>
+                    <input type="date" class="form-control" id="startDate" required>
+                </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label for="endDate" class="form-label"><i class="bi bi-calendar-check"></i> Ngày về</label>
+                    <input type="date" class="form-control" id="endDate" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="travelType" class="form-label"><i class="bi bi-suitcase2"></i> Loại hình du lịch</label>
+                    <select class="form-select" id="travelType" required>
+                        <option value="nghi-duong">Nghỉ dưỡng</option>
+                        <option value="kham-pha">Khám phá</option>
+                        <option value="phieu-luu">Phiêu lưu</option>
+                        <option value="am-thuc">Ẩm thực</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="transportation" class="form-label"><i class="bi bi-car-front-fill"></i> Phương tiện di
+                    chuyển</label>
+                <select class="form-select" id="transportation" required>
+                    <option value="may-bay">Máy bay</option>
+                    <option value="tau-hoa">Tàu hỏa</option>
+                    <option value="o-to">Ô tô</option>
+                    <option value="xe-may">Xe máy</option>
+                </select>
+            </div>
+
+            <div class="d-grid">
+                <button type="submit" class="btn btn-primary btn-lg"><i class="bi bi-map"></i> Tạo lịch trình</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Loading placeholder -->
+    <div id="loading" class="text-center my-4" style="display: none;">
+        <div class="spinner-border text-light" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2 text-light">Đang tạo lịch trình phù hợp nhất cho bạn...</p>
+    </div>
+
+    <!-- Result placeholder -->
+    <div id="result" class="my-5" style="display:none;">
+        <div class="row">
+            <!-- Cột chính hiển thị lịch trình -->
+            <div id="planContent" class="col-lg-8 mb-4"></div>
+
+            <!-- Sidebar hiển thị gợi ý, chi phí, khách sạn -->
+            <div id="sidebarContent" class="col-lg-4"></div>
+        </div>
+
+        <div class="text-center mt-4">
+            <button id="downloadPdfBtn" class="btn btn-danger">Tải bản PDF</button>
+        </div>
+    </div>
+
+    <footer class="mt-5">
+        <p>© 2025 AI Travel Planner | Designed by LuuHieuKhanh</p>
+    </footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
+<script>
+    document.getElementById('travelForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        document.getElementById('result').style.display = 'none';
+        document.getElementById('loading').style.display = 'block';
+
+        const formData = {
+            startDestination: document.getElementById('startingLocation').value,
+            destination: document.getElementById('destination').value,
+            startDate: document.getElementById('startDate').value,
+            endDate: document.getElementById('endDate').value,
+            numberOfPeople: parseInt(document.getElementById('numberOfPeople').value),
+            minBudget: parseFloat(document.getElementById('minBudget').value),
+            maxBudget: parseFloat(document.getElementById('maxBudget').value),
+            travelType: document.getElementById('travelType').value,
+            transportation: document.getElementById('transportation').value
+        };
+
+        fetch('/api/generate-plan', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('loading').style.display = 'none';
+                displayPlan(data);
+            })
+            .catch(error => {
+                console.error('Lỗi:', error);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('result').innerHTML = '<p class="text-danger text-center">Đã có lỗi xảy ra. Vui lòng thử lại sau.</p>';
+                document.getElementById('result').style.display = 'block';
+            });
+    });
+
+    function displayPlan(plan) {
+        const planContentDiv = document.getElementById('planContent');
+        const sidebarContentDiv = document.getElementById('sidebarContent');
+
+        const costBreakdown = plan.costBreakdown || {};
+        const transportationType = costBreakdown.transportationType;
+
+        let sidebarHtml = `
+            <div class="card mb-3 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">Dự báo thời tiết & Gợi ý</h5>
+                    <p>${plan.weatherInfo || 'Không có thông tin'}</p>
+                    <p><strong>Lưu ý:</strong> ${plan.suggestions || 'Không có thông tin'}</p>
+                </div>
+            </div>
+        `;
+
+        // Gợi ý phương tiện di chuyển
+        if (transportationType === 'may-bay') {
+            const flightSuggestions = costBreakdown.flightSuggestions || [];
+            sidebarHtml += `
+            <div class="card mb-3 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">Gợi ý Vé máy bay</h5>
+                    <p><strong>Sân bay gần nhất:</strong> ${costBreakdown.nearestStation || 'Không có thông tin'}</p>
+                    ${flightSuggestions.length > 0 ? `
+                    <ul class="list-unstyled">
+                        ${flightSuggestions.map(flight => `
+                            <li>
+                                <strong>Hãng:</strong> ${flight.airline || 'N/A'}
+                                <br>
+                                <strong>Số hiệu:</strong> ${flight.flightNumber || 'N/A'}
+                                <br>
+                                <strong>Giá ước tính (Khứ hồi):</strong> ${flight.estimatedPrice || 'N/A'}
+                                <br>
+                                <a href="${flight.bookingUrl || '#'}" target="_blank" class="btn btn-sm btn-outline-success mt-2">Đặt vé</a>
+                            </li>
+                        `).join('')}
+                    </ul>` : `<p>Không có gợi ý chuyến bay.</p>`}
+                </div>
+            </div>
+            `;
+        } else if (transportationType === 'tau-hoa') {
+            const trainSuggestions = costBreakdown.trainSuggestions || [];
+            sidebarHtml += `
+            <div class="card mb-3 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">Gợi ý Vé tàu hỏa</h5>
+                    <p><strong>Ga tàu gần nhất:</strong> ${costBreakdown.nearestStation || 'Không có thông tin'}</p>
+                    ${trainSuggestions.length > 0 ? `
+                    <ul class="list-unstyled">
+                        ${trainSuggestions.map(train => `
+                            <li>
+                                <strong>Tên tàu:</strong> ${train.trainName || 'N/A'}
+                                <br>
+                                <strong>Giá ước tính (Khứ hồi):</strong> ${train.estimatedPrice || 'N/A'}
+                                <br>
+                                <a href="${train.bookingUrl || '#'}" target="_blank" class="btn btn-sm btn-outline-success mt-2">Đặt vé</a>
+                            </li>
+                        `).join('')}
+                    </ul>` : `<p>Không có gợi ý chuyến tàu.</p>`}
+                </div>
+            </div>
+            `;
+        } else if (transportationType === 'o-to' || transportationType === 'xe-may') {
+            sidebarHtml += `
+            <div class="card mb-3 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">Chi phí di chuyển bằng ${transportationType === 'o-to' ? 'Ô tô' : 'Xe máy'}</h5>
+                    <p><strong>Tổng quãng đường (Khứ hồi):</strong> ${costBreakdown.totalDistance || 'N/A'}</p>
+                </div>
+            </div>
+            `;
+        }
+
+
+        // Gợi ý Khách sạn
+        const hotels = plan.hotels || [];
+        if (hotels.length > 0) {
+            sidebarHtml += `
+            <div class="card mb-3 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">Gợi ý Khách sạn</h5>
+                    ${hotels.map(hotel => `
+                        <div class="mb-2">
+                            <strong>${hotel.name || 'N/A'}</strong>
+                            <p class="text-muted mb-1">${hotel.priceRange || 'N/A'}</p>
+                            ${(transportationType === 'may-bay' || transportationType === 'tau-hoa') ? `
+                                <p class="text-muted">Khoảng cách đến khách sạn: ${hotel.distanceFromTransportation || 'N/A'}</p>
+                                <p class="text-muted">Chi phí di chuyển: ${hotel.taxiCostFromTransportation || 'N/A'}</p>
+                            ` : ''}
+                            <a href="${hotel.bookingUrl || '#'}" target="_blank" class="btn btn-sm btn-outline-success">Đặt phòng ngay</a>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            `;
+        }
+
+        // Phân tích chi phí
+        sidebarHtml += `
+            <div class="card mb-3 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">Phân tích chi phí</h5>
+                    <table class="table table-sm table-borderless">
+                        <tbody>
+                            <tr><td>Chi phí di chuyển chính</td><td class="text-end">${costBreakdown.transportationCost || 'N/A'} VNĐ</td></tr>
+                            <tr><td>Chi phí taxi & khác</td><td class="text-end">${costBreakdown.taxiCost || 'N/A'} VNĐ</td></tr>
+                            <tr><td>Lưu trú</td><td class="text-end">${costBreakdown.accommodation || 'N/A'} VNĐ</td></tr>
+                            <tr><td>Ăn uống & Hoạt động</td><td class="text-end">${costBreakdown.foodAndActivities || 'N/A'} VNĐ</td></tr>
+                            <tr><td>Phát sinh</td><td class="text-end">${costBreakdown.miscellaneous || 'N/A'} VNĐ</td></tr>
+                            <tr class="fw-bold"><td>Tổng cộng</td><td class="text-end">${costBreakdown.total || 'N/A'} VNĐ</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card mb-3 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">Kế hoạch dự phòng</h5>
+                    <p>${plan.contingencyPlan || 'Không có thông tin'}</p>
+                </div>
+            </div>
+        `;
+
+        sidebarContentDiv.innerHTML = sidebarHtml;
+
+        const dailySchedules = plan.dailySchedules || [];
+        planContentDiv.innerHTML = `
+            <h3 class="mb-4 text-primary">Lịch trình chi tiết theo ngày</h3>
+            ${dailySchedules.map(day => `
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">Ngày ${day.dayNumber || 'N/A'}: ${day.date || 'N/A'}</h4>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled">
+                            ${(day.activities || []).map(activity => `
+    <li class="mb-3">
+        <h6 class="text-info">${activity.time || 'N/A'}</h6>
+        <p>${activity.description || 'N/A'}</p>
+    </li>
+`).join('')
+
+        }
+                        </ul>
+                    </div>
+                </div>
+            `).join('')}
+        `;
+
+        document.getElementById('result').style.display = 'block';
+    }
+
+    document.getElementById('downloadPdfBtn').addEventListener('click', function () {
+        const element = document.getElementById('result');
+        const opt = {
+            margin: 1,
+            filename: 'Lich_trinh_du_lich.pdf',
+            image: {type: 'jpeg', quality: 0.98},
+            html2canvas: {scale: 2},
+            jsPDF: {unit: 'in', format: 'letter', orientation: 'portrait'}
+        };
+        html2pdf().set(opt).from(element).save();
+    });
+</script>
+</body>
+</html>
