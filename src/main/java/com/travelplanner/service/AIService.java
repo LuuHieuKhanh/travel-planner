@@ -52,7 +52,7 @@ public class AIService {
         promptBuilder.append("Đảm bảo rằng tổng chi phí trong mục costBreakdown nằm trong khoảng ngân sách đã cho. ");
         promptBuilder.append("Phí vào cửa, chi phí ăn uống của từng địa điểm phải được thêm vào mục mô tả. ");
         promptBuilder.append("Các trường chi phí phải được hiển thị dưới dạng khoảng giá, ví dụ: \"1.000.000 - 2.000.000 VNĐ\". ");
-        promptBuilder.append("Mỗi hoạt động hoặc địa điểm trong dailySchedules.activities phải có thêm trường \"imageUrl\" chứa link ảnh thực tế chất lượng cao, liên quan đến địa điểm hoặc hoạt động đó. ");
+        promptBuilder.append("Mỗi hoạt động hoặc địa điểm trong dailySchedules.activities phải có thông tin mô tả về từng địa điểm tham quan như lịch sử tổng quan, giới thiệu cho người dùng biết địa điểm đó như thế nào");
         promptBuilder.append("Ảnh nên được lấy từ nguồn công khai trên Pinterest. Không sử dụng của Wikipedia.\n");
 
         if (transportationType.equals("may-bay")) {
